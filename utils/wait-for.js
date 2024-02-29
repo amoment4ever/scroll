@@ -1,8 +1,32 @@
 const { default: BigNumber } = require('bignumber.js');
 const { getTokenBalance } = require('../components/okx');
+const { web3Eth } = require('../components/web3-eth');
+const { MAX_GWEI_ETH } = require('../settings');
 const { logger } = require('./logger');
 const { retry } = require('./retry');
 const { sleep } = require('./sleep');
+
+async function waitForLowerGasPrice() {
+  await retry(async () => {
+    while (true) {
+      // Получаем текущую цену газа в сети
+      const currentGasPrice = await web3Eth.eth.getGasPrice();
+      const currentGasPriceInGwei = web3Eth.utils.fromWei(currentGasPrice, 'gwei');
+
+      logger.info(`Current gas ${currentGasPriceInGwei} GWEI`);
+
+      // Проверяем, не опустилась ли цена ниже или равна заданной
+      if (parseFloat(currentGasPriceInGwei) <= MAX_GWEI_ETH) {
+        logger.info(`Gas price has reached the desired level: ${MAX_GWEI_ETH} GWEI`);
+        break;
+      } else {
+        logger.info(`Expect gas prices to decrease to ${MAX_GWEI_ETH} GWEI...`);
+        // Ожидаем некоторое время перед следующей проверкой
+        await sleep(10000);
+      }
+    }
+  }, 10, 12000);
+}
 
 async function waitForBitgetBalance(amount, token) {
   await retry(async () => {
@@ -75,4 +99,5 @@ module.exports = {
   waitForTokenBalance,
   waitForBitgetBalance,
   waitForEthBalance,
+  waitForLowerGasPrice,
 };

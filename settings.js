@@ -7,10 +7,13 @@ const MAX_AMOUNT_ETH = 0.6;
 
 const AMOUNT_BORROW_PERCENT = 0.5;
 
+const MAX_GWEI_ETH = 35;
+
 module.exports = {
   SLEEP_MIN_MS,
   SLEEP_MAX_MS,
   MIN_AMOUNT_ETH,
   MAX_AMOUNT_ETH,
   AMOUNT_BORROW_PERCENT,
+  MAX_GWEI_ETH,
 };
