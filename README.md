@@ -13,12 +13,12 @@ The use of this script involves inherent risks due to the volatility of cryptocu
 
 ## Installation
 Install the necessary dependencies:
-    ```bash
+    ```
     npm install
     ```
 ## Run
 Install the necessary dependencies:
-    ```bash
+    ```
     node index.js
     ```
 
@@ -59,7 +59,7 @@ Before running the script, ensure the following configuration files are properly
 
 ## Usage
 To run the script, execute the following command in the terminal:
-    ```bash
+    ```
     node index.js
     ```
 Ensure all configurations are correctly set up for the script to run smoothly.
