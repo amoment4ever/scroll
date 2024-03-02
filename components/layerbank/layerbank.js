@@ -24,7 +24,7 @@ class LayerBank {
   async getBorrowAmount(lpAddress, address) {
     const contractLp = new this.web3.eth.Contract(ABI_LP, lpAddress);
 
-    return contractLp.methods.borrowBalanceOf(address).call();
+    return await contractLp.methods.borrowBalanceOf(address).call();
   }
 
   withdraw(amountWei) {
