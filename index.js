@@ -11,7 +11,7 @@ const { waitForLowerGasPrice } = require('./utils/wait-for');
 const WALLETS = require('./wallets.json');
 
 async function start() {
-  for (const { PRIVATE_KEY } of WALLETS) {
+  for (const { PRIVATE_KEY, DEPOSIT_OKX_ADDRESS } of WALLETS) {
     const { web3Scroll, proxy, scan } = web3ScrollList.get();
     const ethAccount = new EthAccount(PRIVATE_KEY, web3Scroll, proxy, scan);
 
@@ -25,7 +25,7 @@ async function start() {
 
     await waitForLowerGasPrice();
 
-    await mainAction(ethAccount, web3Scroll, scan, proxy);
+    await mainAction(ethAccount, web3Scroll, scan, proxy, DEPOSIT_OKX_ADDRESS);
 
     const sleepMs = getRandomInt(SLEEP_MIN_MS, SLEEP_MAX_MS);
 

@@ -1,12 +1,16 @@
+const { default: BigNumber } = require('bignumber.js');
 const { logger } = require('../utils/logger');
 
-async function transferAction(web3, fromAddress, toAddress, chain) {
-  const gasPrice = await web3.eth.getGasPrice();
+async function transferAction(ethAccount, fromAddress, toAddress, chain) {
   const gasLimit = 21000; // Стандартный лимит газа для транзакции ETH
 
-  const balance = await web3.eth.getBalance(fromAddress);
+  const balance = await ethAccount.getBalance();
 
-  const value = web3.utils.toBN(balance).sub(web3.utils.toBN(gasPrice).mul(web3.utils.toBN(gasLimit)));
+  const leaveAmouht = new BigNumber(0.0003).multipliedBy(1e18);
+
+  const value = new BigNumber(balance).minus(leaveAmouht).toString();
+
+  const { gasPrice } = await ethAccount.getGasPrice();
 
   const tx = {
     from: fromAddress,
@@ -16,7 +20,7 @@ async function transferAction(web3, fromAddress, toAddress, chain) {
     gasPrice,
   };
 
-  const data = await web3.eth.sendTransaction(tx);
+  const data = await ethAccount.sendTransaction(tx);
 
   logger.info('Transfer to okx', {
     txHash: data.transactionHash,

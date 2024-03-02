@@ -8,7 +8,9 @@ const { web3sLinea } = require('../components/web3-linea');
 const {
   USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, LAYERBANK_USDC, WETH_TOKEN_CONTRACT,
 } = require('../constants/constants');
-const { SLEEP_MIN_MS, SLEEP_MAX_MS, AMOUNT_BORROW_PERCENT } = require('../settings');
+const {
+  SLEEP_MIN_MS, SLEEP_MAX_MS, AMOUNT_BORROW_PERCENT, LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX, MIN_AMOUNT_ETH, MAX_AMOUNT_ETH,
+} = require('../settings');
 const { getRandomFromArray } = require('../utils/array');
 const { randomNumber, getRandomInt } = require('../utils/getRandomInt');
 const { logger } = require('../utils/logger');
@@ -32,7 +34,7 @@ async function sleepWithLog() {
 }
 
 async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress) {
-  const AMOUNT_ETH = 0.5;
+  const AMOUNT_ETH = +randomNumber(MIN_AMOUNT_ETH, MAX_AMOUNT_ETH).toFixed(5);
 
   const SOURCE_CHAIN = getRandomFromArray('Linea', 'Arbitrum One');
   // const SOURCE_CHAIN = 'Linea';
@@ -47,9 +49,9 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   await withdrawToken(ethAccount.address, AMOUNT_ETH, 'ETH', SOURCE_CHAIN);
 
   logger.info('Wait for ETH on balance', {
-    expect: AMOUNT_ETH - 0.05,
+    expect: AMOUNT_ETH * 0.95,
   });
-  await waitForEthBalance(sourceWeb3, AMOUNT_ETH - 0.05, ethAccount.address);
+  await waitForEthBalance(sourceWeb3, AMOUNT_ETH * 0.95, ethAccount.address);
 
   const ethAccountSourceChain = new EthAccount(ethAccount.privateKey, sourceWeb3, proxy);
 
@@ -127,7 +129,7 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   await withdrawLayerBankAction(ethAccount, web3Scroll, scan);
 
   const currentBalance = await ethAccount.getBalance(ethAccount.address);
-  const leaveAmount = +randomNumber(0.012, 0.015).toFixed(5);
+  const leaveAmount = +randomNumber(LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX).toFixed(5);
   const bridgeAmount = new BigNumber(currentBalance).div(1e18).minus(leaveAmount).toFixed(5);
 
   await sleepWithLog();
@@ -148,7 +150,7 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
     chain: SOURCE_CHAIN,
   });
 
-  await transferAction(web3Scroll, ethAccount.address, depositOkxAddress, SOURCE_CHAIN);
+  await transferAction(ethAccountSourceChain, ethAccount.address, depositOkxAddress, SOURCE_CHAIN);
 }
 
 module.exports = {
