@@ -41,10 +41,17 @@ async function doSwapSyncSwap(ethAccount, web3Scroll, scan, amountSwap, fromToke
     await ethAccount.checkAndApproveToken(fromToken, SYNCSWAP_ROUTER_CONTRACT, amountInWei);
   }
 
+  const estimateGas = await methodSwap.estimateGas({
+    from: ethAccount.address,
+    value: TOKENS.ETH === fromToken ? amountInWei.toString() : undefined,
+    gasPrice,
+  });
+
   const response = await methodSwap.send({
     from: ethAccount.address,
     value: TOKENS.ETH === fromToken ? amountInWei.toString() : undefined,
     gasPrice,
+    gas: Math.floor(Number(estimateGas) * 1.2),
   });
 
   logger.info('Swapped', {
