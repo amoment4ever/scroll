@@ -1,6 +1,7 @@
 const { default: BigNumber } = require('bignumber.js');
 const { EthAccount } = require('../components/account');
 const { ERC20Contract } = require('../components/erc20');
+const { LayerBank } = require('../components/layerbank/layerbank');
 const { withdrawToken } = require('../components/okx');
 const { SyncSwap } = require('../components/syncswap');
 const { web3sArbList } = require('../components/web3-arb');
@@ -14,6 +15,7 @@ const {
 const { getRandomFromArray } = require('../utils/array');
 const { randomNumber, getRandomInt } = require('../utils/getRandomInt');
 const { logger } = require('../utils/logger');
+const { retry } = require('../utils/retry');
 const { sleep } = require('../utils/sleep');
 const { waitForEthBalance } = require('../utils/wait-for');
 const {
@@ -36,8 +38,8 @@ async function sleepWithLog() {
 async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress) {
   const AMOUNT_ETH = +randomNumber(MIN_AMOUNT_ETH, MAX_AMOUNT_ETH).toFixed(5);
 
-  const SOURCE_CHAIN = getRandomFromArray('Linea', 'Arbitrum One');
-  // const SOURCE_CHAIN = 'Linea';
+  // const SOURCE_CHAIN = getRandomFromArray(['Linea', 'Arbitrum One']);
+  const SOURCE_CHAIN = 'Linea';
 
   const web3List = SOURCE_CHAIN === 'Linea' ? web3sLinea : web3sArbList;
 
@@ -91,6 +93,8 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   await sleepWithLog();
   await doSwapSyncSwap(ethAccount, web3Scroll, scan, AMOUNT_BORROW, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS);
 
+  await sleepWithLog();
+
   const usdtContract = new ERC20Contract(web3Scroll, USDT_TOKEN_ADDRESS);
   const usdtBalance = await usdtContract.getBalance(ethAccount.address);
 
@@ -104,12 +108,17 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   const usdcContract = new ERC20Contract(web3Scroll, USDC_TOKEN_ADDRESS);
   const usdcCurrentBalance = await usdcContract.getBalance(ethAccount.address);
 
-  const difference = borrowWei.minus(usdcCurrentBalance);
+  const layerBank = new LayerBank(web3Scroll);
+
+  const borrowAmountWei = await layerBank.getBorrowAmount(LAYERBANK_USDC, ethAccount.address);
+
+  const difference = new BigNumber(borrowAmountWei).minus(usdcCurrentBalance);
 
   if (difference.gte(0)) {
     logger.info('Swap ETH => USDC', {
       usdcCurrentBalance,
       amount: difference.toString(),
+      borrowAmountWei,
     });
 
     const syncSwap = new SyncSwap(web3Scroll);
@@ -150,7 +159,9 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
     chain: SOURCE_CHAIN,
   });
 
-  await transferAction(ethAccountSourceChain, ethAccount.address, depositOkxAddress, SOURCE_CHAIN);
+  await retry(async () => {
+    await transferAction(ethAccountSourceChain, ethAccount.address, depositOkxAddress, SOURCE_CHAIN);
+  }, 5, 10000);
 }
 
 module.exports = {
