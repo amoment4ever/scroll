@@ -16,10 +16,17 @@ async function depositLayerBankAction(ethAccount, web3Scroll, scan, amountDeposi
   await retry(async () => {
     const { gasPrice } = await ethAccount.getGasPrice();
 
+    const estimateGas = await layerBank.deposit(amountDepositWei.toString()).estimateGas({
+      from: ethAccount.address,
+      value: amountDepositWei.toString(),
+      gasPrice,
+    });
+
     const response = await layerBank.deposit(amountDepositWei.toString()).send({
       from: ethAccount.address,
       value: amountDepositWei.toString(),
       gasPrice,
+      gas: Math.floor(Number(estimateGas) * 1.2),
     });
 
     logger.info('Deposit layerbank response', {
@@ -36,9 +43,16 @@ async function borrowLayerBank(ethAccount, web3Scroll, scan, amountBorrowWei) {
     const { gasPrice } = await ethAccount.getGasPrice();
 
     logger.info('Do colleteral layerbank');
+
+    const estimateGas = await layerBank.enterMarket().estimateGas({
+      from: ethAccount.address,
+      gasPrice,
+    });
+
     const response = await layerBank.enterMarket().send({
       from: ethAccount.address,
       gasPrice,
+      gas: Math.floor(Number(estimateGas) * 1.2),
     });
 
     logger.info('Colleteral ETH layerbank response', {
@@ -50,9 +64,15 @@ async function borrowLayerBank(ethAccount, web3Scroll, scan, amountBorrowWei) {
   await retry(async () => {
     const { gasPrice } = await ethAccount.getGasPrice();
 
+    const estimateGas = await layerBank.borrow(LAYERBANK_USDC, amountBorrowWei).estimateGas({
+      from: ethAccount.address,
+      gasPrice,
+    });
+
     const data = await layerBank.borrow(LAYERBANK_USDC, amountBorrowWei).send({
       from: ethAccount.address,
       gasPrice,
+      gas: Math.floor(Number(estimateGas) * 1.2),
     });
 
     logger.info('Borrow usdc', {
@@ -74,9 +94,14 @@ async function withdrawLayerBankAction(ethAccount, web3Scroll, scan) {
     });
 
     if (depositedAmount) {
+      const estimateGas = await layerBank.withdraw(depositedAmount).estimateGas(
+        { from: ethAccount.address },
+      );
+
       const withdraw = await layerBank.withdraw(depositedAmount).send({
         from: ethAccount.address,
         gasPrice,
+        gas: Math.floor(Number(estimateGas) * 1.2),
       });
 
       logger.info('Withdraw info', {
@@ -99,9 +124,15 @@ async function repayLayerBank(ethAccount, web3Scroll, scan, lpToken, tokenAddres
     await ethAccount.checkAndApproveToken(tokenAddress, lpToken, borrowAmount);
     const { gasPrice } = await ethAccount.getGasPrice();
 
+    const estimateGas = await layerBank.repay(lpToken, new BigNumber(borrowAmount).plus(150).toString()).estimateGas({
+      from: ethAccount.address,
+      gasPrice,
+    });
+
     const response = await layerBank.repay(lpToken, new BigNumber(borrowAmount).plus(150).toString()).send({
       from: ethAccount.address,
       gasPrice,
+      gas: Math.floor(Number(estimateGas) * 1.2),
     });
 
     logger.info('Withdraw info', {
