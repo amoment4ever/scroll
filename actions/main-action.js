@@ -10,7 +10,7 @@ const {
   USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, LAYERBANK_USDC, WETH_TOKEN_CONTRACT,
 } = require('../constants/constants');
 const {
-  SLEEP_MIN_MS, SLEEP_MAX_MS, AMOUNT_BORROW_PERCENT, LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX, MIN_AMOUNT_ETH, MAX_AMOUNT_ETH,
+  SLEEP_MIN_MS, SLEEP_MAX_MS, AMOUNT_BORROW_PERCENT, LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX, MIN_AMOUNT_ETH, MAX_AMOUNT_ETH, MAX_SWAP_USDC,
 } = require('../settings');
 const { getRandomFromArray } = require('../utils/array');
 const { randomNumber, getRandomInt } = require('../utils/getRandomInt');
@@ -86,12 +86,14 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   const borrowWei = new BigNumber(AMOUNT_BORROW).multipliedBy(10 ** 6);
   await borrowLayerBank(ethAccount, web3Scroll, scan, borrowWei.toString());
 
+  const SWAP_AMOUNT = Math.min(AMOUNT_BORROW, +(MAX_SWAP_USDC * randomNumber(0.9, 1)).toFixed(6));
+
   logger.info('Do swap SYNCSWAP USDC => USDT', {
-    amount: AMOUNT_BORROW,
+    amount: SWAP_AMOUNT,
   });
 
   await sleepWithLog();
-  await doSwapSyncSwap(ethAccount, web3Scroll, scan, AMOUNT_BORROW, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS);
+  await doSwapSyncSwap(ethAccount, web3Scroll, scan, SWAP_AMOUNT, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS);
 
   await sleepWithLog();
 

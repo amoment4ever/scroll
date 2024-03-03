@@ -10,6 +10,8 @@ const LEAVE_AMOUNT_ETH_MAX = 0.015;
 
 const AMOUNT_BORROW_PERCENT = 0.5;
 
+const MAX_SWAP_USDC = 1000;
+
 const MAX_GWEI_ETH = 35;
 
 module.exports = {
@@ -21,4 +23,5 @@ module.exports = {
   MAX_GWEI_ETH,
   LEAVE_AMOUNT_ETH_MIN,
   LEAVE_AMOUNT_ETH_MAX,
+  MAX_SWAP_USDC,
 };
