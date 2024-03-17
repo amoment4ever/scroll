@@ -79,12 +79,12 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   const balanceForWorkWei = await ethAccount.getBalance(ethAccount.address);
   const balanceForWork = new BigNumber(balanceForWorkWei).div(1e18).minus(0.01);
 
-  if (Math.random() < 0.3) {
+  if (Math.random() < 0.15) {
     await depositCogFinance(ethAccount, web3Scroll, scan, balanceForWork);
     await sleepWithLog();
   }
 
-  if (Math.random() < 0.3) {
+  if (Math.random() < 0.4) {
     await depositAaveAction(ethAccount, web3Scroll, scan, balanceForWork);
     await sleepWithLog();
   }

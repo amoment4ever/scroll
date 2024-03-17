@@ -2,17 +2,17 @@
 const SLEEP_MIN_MS = 20000;
 const SLEEP_MAX_MS = 50000;
 
-const MIN_AMOUNT_ETH = 0.4;
-const MAX_AMOUNT_ETH = 0.6;
+const MIN_AMOUNT_ETH = 0.5;
+const MAX_AMOUNT_ETH = 0.85;
 
 const LEAVE_AMOUNT_ETH_MIN = 0.012;
 const LEAVE_AMOUNT_ETH_MAX = 0.015;
 
 const AMOUNT_BORROW_PERCENT = 0.5;
 
-const MAX_SWAP_USDC = 1000;
+const MAX_SWAP_USDC = 800;
 
-const MAX_GWEI_ETH = 35;
+const MAX_GWEI_ETH = 40;
 
 module.exports = {
   SLEEP_MIN_MS,

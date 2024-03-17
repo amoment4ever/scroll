@@ -5,6 +5,7 @@ const { LayerBank } = require('../components/layerbank/layerbank');
 const { INFINITY_APPROVE, LAYERBANK_USDC } = require('../constants/constants');
 const { logger } = require('../utils/logger');
 const { retry } = require('../utils/retry');
+const { sleep } = require('../utils/sleep');
 
 async function depositLayerBankAction(ethAccount, web3Scroll, scan, amountDeposit) {
   const AMOUNT_DEPOSIT_LAYERBANK = amountDeposit;
@@ -160,6 +161,8 @@ async function depositAaveAction(ethAccount, web3Scroll, scan, amount) {
       address: ethAccount.address,
       tx: `${scan}/tx/${response.transactionHash}`,
     });
+
+    await sleep(7000);
   }, 4, 20000);
 
   await retry(async () => {
@@ -187,7 +190,9 @@ async function depositAaveAction(ethAccount, web3Scroll, scan, amount) {
             address: ethAccount.address,
             tx: `${scan}/tx/${approveResponse.transactionHash}`,
           });
-        }, 2);
+
+          await sleep(7000);
+        }, 4, 10000);
       }
 
       const withdraw = await aave.withdraw(depositedAmount, ethAccount.address).send({
@@ -226,6 +231,8 @@ async function depositCogFinance(ethAccount, web3Scroll, scan, amount) {
       address: ethAccount.address,
       tx: `${scan}/tx/${wrapResponse.transactionHash}`,
     });
+
+    await sleep(7000);
   }, 4, 12000);
 
   const allowance = await cogFinance.wethToken.methods.allowance(ethAccount.address, cogFinance.contractAddress).call();
@@ -246,6 +253,8 @@ async function depositCogFinance(ethAccount, web3Scroll, scan, amount) {
         address: ethAccount.address,
         tx: `${scan}/tx/${approveResponse.transactionHash}`,
       });
+
+      await sleep(7000);
     }, 4, 12000);
   }
 
@@ -259,6 +268,8 @@ async function depositCogFinance(ethAccount, web3Scroll, scan, amount) {
       address: ethAccount.address,
       tx: `${scan}/tx/${response.transactionHash}`,
     });
+
+    await sleep(7000);
   }, 4, 20000);
 
   await retry(async () => {
@@ -278,6 +289,8 @@ async function depositCogFinance(ethAccount, web3Scroll, scan, amount) {
         address: ethAccount.address,
         tx: `${scan}/tx/${withdraw.transactionHash}`,
       });
+
+      await sleep(7000);
     }
   }, 4, 20000);
 
