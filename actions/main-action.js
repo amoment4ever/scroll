@@ -166,9 +166,10 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
 
   logger.info('Return USDC layerbank');
   await repayLayerBank(ethAccount, web3Scroll, scan, LAYERBANK_USDC, USDC_TOKEN_ADDRESS);
-
+  await sleepWithLog();
   logger.info('Withdraw ETH from layerbank');
   await withdrawLayerBankAction(ethAccount, web3Scroll, scan);
+  await sleepWithLog();
 
   if (Math.random() < 0.15) {
     await depositCogFinance(ethAccount, web3Scroll, scan, balanceForWork);
@@ -179,8 +180,6 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
     await depositAaveAction(ethAccount, web3Scroll, scan, balanceForWork);
     await sleepWithLog();
   }
-
-  await sleepWithLog();
 
   const currentBalance = await ethAccount.getBalance(ethAccount.address);
   const leaveAmount = +randomNumber(LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX).toFixed(5);
