@@ -171,13 +171,17 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   await withdrawLayerBankAction(ethAccount, web3Scroll, scan);
   await sleepWithLog();
 
-  if (Math.random() < 0.15) {
-    await depositCogFinance(ethAccount, web3Scroll, scan, balanceForWork);
+  const actions = [depositCogFinance, depositAaveAction];
+
+  if (Math.random() < 0.3) {
+    const randomAction = getRandomFromArray(actions);
+    await randomAction(ethAccount, web3Scroll, scan, balanceForWork);
     await sleepWithLog();
   }
 
-  if (Math.random() < 0.15) {
-    await depositAaveAction(ethAccount, web3Scroll, scan, balanceForWork);
+  if (Math.random() < 0.3) {
+    const randomAction = getRandomFromArray(actions);
+    await randomAction(ethAccount, web3Scroll, scan, balanceForWork);
     await sleepWithLog();
   }
 
