@@ -180,11 +180,11 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
     await sleepWithLog();
   }
 
+  await sleepWithLog();
+
   const currentBalance = await ethAccount.getBalance(ethAccount.address);
   const leaveAmount = +randomNumber(LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX).toFixed(5);
   const bridgeAmount = new BigNumber(currentBalance).div(1e18).minus(leaveAmount).toFixed(5);
-
-  await sleepWithLog();
 
   logger.info('Do bridge from SCROLL', {
     sourceChain: SOURCE_CHAIN,
