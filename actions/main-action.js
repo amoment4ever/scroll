@@ -60,7 +60,7 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
 
   const ethAccountSourceChain = new EthAccount(ethAccount.privateKey, sourceWeb3, proxy);
 
-  const amountBridge = +(AMOUNT_ETH * 0.97).toFixed(5);
+  const amountBridge = +(AMOUNT_ETH * 0.98).toFixed(5);
 
   logger.info('Do bridge to SCROLL', {
     amountBridge,
