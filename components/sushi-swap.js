@@ -39,6 +39,11 @@ class SushiSwap {
     return await this.request({
       url,
       qs: params,
+      headers: {
+        Origin: 'https://www.sushi.com',
+        Referer: 'https://www.sushi.com/',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+      },
     });
   }
 

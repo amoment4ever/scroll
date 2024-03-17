@@ -22,7 +22,7 @@ const {
   depositLayerBankAction, borrowLayerBank, repayLayerBank, withdrawLayerBankAction,
 } = require('./actions-landings');
 const { doSwapSyncSwap, doSwapSushiSwap } = require('./actions-swaps');
-const { doBridge } = require('./do-bridge');
+const { doBridge, doBridgeOrbiter } = require('./do-bridge');
 const { transferAction } = require('./transferAction');
 
 async function sleepWithLog() {
@@ -60,13 +60,18 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
 
   const ethAccountSourceChain = new EthAccount(ethAccount.privateKey, sourceWeb3, proxy);
 
-  const amountBridge = +(AMOUNT_ETH * 0.96).toFixed(5);
+  const amountBridge = +(AMOUNT_ETH * 0.97).toFixed(5);
 
   logger.info('Do bridge to SCROLL', {
     amountBridge,
     sourceChain: SOURCE_CHAIN,
   });
-  await doBridge(ethAccountSourceChain, sourceWeb3, scan, proxy, amountBridge, SOURCE_CHAIN, 'SCROLL');
+
+  if (Math.random() > 0.3) {
+    await doBridgeOrbiter(ethAccountSourceChain, sourceWeb3, scan, proxy, amountBridge, SOURCE_CHAIN.toUpperCase(), 'SCROLL');
+  } else {
+    await doBridge(ethAccountSourceChain, sourceWeb3, scan, proxy, amountBridge, SOURCE_CHAIN, 'SCROLL');
+  }
 
   logger.info('Wait for ETH in SCROLL');
   await waitForEthBalance(web3Scroll, AMOUNT_ETH * 0.9, ethAccount.address);
@@ -143,8 +148,7 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
     if (Math.random() > 0.5) {
       await doSwapSyncSwap(ethAccount, web3Scroll, scan, new BigNumber(minAmountIn).div(10 ** 18), WETH_TOKEN_CONTRACT, USDC_TOKEN_ADDRESS);
     } else {
-      await doSwapSushiSwap(ethAccount, web3Scroll, scan, new BigNumber(minAmountIn).div(10 ** 18)
-        .multipliedBy(1.05).toNumber(), NATIVE_TOKEN, USDC_TOKEN_ADDRESS);
+      await doSwapSushiSwap(ethAccount, web3Scroll, scan, new BigNumber(new BigNumber(minAmountIn).multipliedBy(1.05).toFixed(0)).div(10 ** 18), NATIVE_TOKEN, USDC_TOKEN_ADDRESS);
     }
   }
 

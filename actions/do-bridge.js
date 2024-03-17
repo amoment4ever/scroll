@@ -1,5 +1,6 @@
 const { default: BigNumber } = require('bignumber.js');
 const { NitroBridge } = require('../components/nitro-router');
+const { Orbiter } = require('../components/orbiter');
 const { NATIVE_TOKEN } = require('../constants/constants');
 const { logger } = require('../utils/logger');
 const { retry } = require('../utils/retry');
@@ -76,6 +77,33 @@ async function doBridge(ethAccount, web3, scan, proxy, bridgeAmount, fromChain, 
   }, 7, 20000);
 }
 
+async function doBridgeOrbiter(ethAccount, web3, scan, proxy, bridgeAmount, fromChain, toChain) {
+  const orbiter = new Orbiter(web3, proxy?.proxy);
+
+  return await retry(async () => {
+    const {
+      _sendValue,
+      to,
+    } = await orbiter.getBridgeAmount(fromChain, toChain, bridgeAmount);
+
+    const { gasPrice } = await ethAccount.getGasPrice();
+
+    const response = await ethAccount.sendTransaction({
+      from: ethAccount.address,
+      to,
+      value: _sendValue,
+      gasPrice,
+      gas: 21_000,
+    });
+
+    logger.info('Sent transaction', {
+      hash: `${scan}/tx/${response?.transactionHash}`,
+      address: ethAccount.address,
+    });
+  }, 5, 20000);
+}
+
 module.exports = {
   doBridge,
+  doBridgeOrbiter,
 };

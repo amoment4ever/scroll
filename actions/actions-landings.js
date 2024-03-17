@@ -101,7 +101,7 @@ async function withdrawLayerBankAction(ethAccount, web3Scroll, scan) {
       const withdraw = await layerBank.withdraw(depositedAmount).send({
         from: ethAccount.address,
         gasPrice,
-        gas: Math.floor(Number(estimateGas) * 1.2),
+        gas: Math.floor(Number(estimateGas) * 2),
       });
 
       logger.info('Withdraw info', {
