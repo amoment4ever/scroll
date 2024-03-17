@@ -133,7 +133,7 @@ async function repayLayerBank(ethAccount, web3Scroll, scan, lpToken, tokenAddres
     const response = await layerBank.repay(lpToken, new BigNumber(borrowAmount).plus(150).toString()).send({
       from: ethAccount.address,
       gasPrice,
-      gas: Math.floor(Number(estimateGas) * 1.2),
+      gas: Math.floor(Number(estimateGas) * 2),
     });
 
     logger.info('Withdraw info', {
