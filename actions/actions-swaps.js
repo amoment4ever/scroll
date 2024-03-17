@@ -7,6 +7,7 @@ const {
 } = require('../constants/constants');
 const { logger } = require('../utils/logger');
 const { retry } = require('../utils/retry');
+const { sleep } = require('../utils/sleep');
 
 async function getDecimals(web3, tokenAddress) {
   if (tokenAddress === ZERO_ADDRESS || tokenAddress === NATIVE_TOKEN) {
@@ -42,6 +43,7 @@ async function doSwapSyncSwap(ethAccount, web3Scroll, scan, amountSwap, fromToke
 
     if (fromToken !== TOKENS.ETH) {
       await ethAccount.checkAndApproveToken(fromToken, SYNCSWAP_ROUTER_CONTRACT, amountInWei);
+      await sleep(10000);
     }
 
     const estimateGas = await methodSwap.estimateGas({
@@ -75,6 +77,7 @@ async function doSwapSushiSwap(ethAccount, web3Scroll, scan, amountSwap, fromTok
 
     if (fromToken !== NATIVE_TOKEN) {
       await ethAccount.checkAndApproveToken(fromToken, SUSHI_SWAP_ROUTER, amountInWei);
+      await sleep(10000);
     }
 
     const MAX_PRICE_IMPACT = 0.005;

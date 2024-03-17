@@ -96,7 +96,7 @@ async function doBridgeOrbiter(ethAccount, web3, scan, proxy, bridgeAmount, from
       gas: 21_000,
     });
 
-    logger.info('Sent transaction', {
+    logger.info('Sent transaction Orbiter', {
       hash: `${scan}/tx/${response?.transactionHash}`,
       address: ethAccount.address,
     });

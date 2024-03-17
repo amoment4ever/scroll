@@ -142,8 +142,8 @@ async function repayLayerBank(ethAccount, web3Scroll, scan, lpToken, tokenAddres
   }, 5, 12000);
 }
 
-async function depositAaveAction(ethAccount, web3Scroll, scan) {
-  const AMOUNT_DEPOSIT_AAVE = 0.001;
+async function depositAaveAction(ethAccount, web3Scroll, scan, amount) {
+  const AMOUNT_DEPOSIT_AAVE = amount;
   const aave = new Aave(web3Scroll);
 
   const { gasPrice } = await ethAccount.getGasPrice();
@@ -160,7 +160,7 @@ async function depositAaveAction(ethAccount, web3Scroll, scan) {
       address: ethAccount.address,
       tx: `${scan}/tx/${response.transactionHash}`,
     });
-  }, 2, 10000);
+  }, 4, 20000);
 
   await retry(async () => {
     const depositedAmount = await aave.getAmountDeposit(ethAccount.address);
@@ -200,11 +200,11 @@ async function depositAaveAction(ethAccount, web3Scroll, scan) {
         tx: `${scan}/tx/${withdraw.transactionHash}`,
       });
     }
-  }, 2, 10000);
+  }, 4, 20000);
 }
 
-async function depositCogFinance(ethAccount, web3Scroll, scan) {
-  const AMOUNT_DEPOSIT_COG = 0.001;
+async function depositCogFinance(ethAccount, web3Scroll, scan, amount) {
+  const AMOUNT_DEPOSIT_COG = amount;
   const cogFinance = new CogFinance(web3Scroll);
 
   const { gasPrice } = await ethAccount.getGasPrice();
@@ -226,7 +226,7 @@ async function depositCogFinance(ethAccount, web3Scroll, scan) {
       address: ethAccount.address,
       tx: `${scan}/tx/${wrapResponse.transactionHash}`,
     });
-  }, 2, 10000);
+  }, 4, 12000);
 
   const allowance = await cogFinance.wethToken.methods.allowance(ethAccount.address, cogFinance.contractAddress).call();
 
@@ -237,7 +237,7 @@ async function depositCogFinance(ethAccount, web3Scroll, scan) {
         spender: cogFinance.contractAddress,
         token: 'WETH',
       });
-      const approveResponse = await cogFinance.wethToken.approve(cogFinance.contractAddress, INFINITY_APPROVE).send({
+      const approveResponse = await cogFinance.wethToken.methods.approve(cogFinance.contractAddress, INFINITY_APPROVE).send({
         from: ethAccount.address,
         gasPrice,
       });
@@ -246,7 +246,7 @@ async function depositCogFinance(ethAccount, web3Scroll, scan) {
         address: ethAccount.address,
         tx: `${scan}/tx/${approveResponse.transactionHash}`,
       });
-    }, 2, 10000);
+    }, 4, 12000);
   }
 
   await retry(async () => {
@@ -259,7 +259,7 @@ async function depositCogFinance(ethAccount, web3Scroll, scan) {
       address: ethAccount.address,
       tx: `${scan}/tx/${response.transactionHash}`,
     });
-  }, 2, 10000);
+  }, 4, 20000);
 
   await retry(async () => {
     const depositedAmount = await cogFinance.getAmountDeposit(ethAccount.address);
@@ -279,7 +279,7 @@ async function depositCogFinance(ethAccount, web3Scroll, scan) {
         tx: `${scan}/tx/${withdraw.transactionHash}`,
       });
     }
-  }, 2, 10000);
+  }, 4, 20000);
 
   await retry(async () => {
     const balanceWeth = await cogFinance.wethToken.methods.balanceOf(ethAccount.address).call();
