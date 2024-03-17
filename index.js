@@ -3,7 +3,9 @@ const rp = require('request-promise');
 const { mainAction } = require('./actions/main-action');
 const { EthAccount } = require('./components/account');
 const { web3ScrollList } = require('./components/web3-scroll');
-const { SLEEP_MIN_MS, SLEEP_MAX_MS } = require('./settings');
+const {
+  SLEEP_MAX_ACC_MS, SLEEP_MIN_ACC_MS,
+} = require('./settings');
 const { getRandomInt } = require('./utils/getRandomInt');
 const { logger } = require('./utils/logger');
 const { sleep } = require('./utils/sleep');
@@ -27,7 +29,7 @@ async function start() {
 
     await mainAction(ethAccount, web3Scroll, scan, proxy, DEPOSIT_OKX_ADDRESS);
 
-    const sleepMs = getRandomInt(SLEEP_MIN_MS, SLEEP_MAX_MS);
+    const sleepMs = getRandomInt(SLEEP_MIN_ACC_MS, SLEEP_MAX_ACC_MS);
 
     logger.info('sleep', {
       ms: sleepMs,

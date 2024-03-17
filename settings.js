@@ -1,6 +1,10 @@
+// sleep между действиями
+const SLEEP_MIN_MS = 30000;
+const SLEEP_MAX_MS = 70000;
+
 // sleep между акками
-const SLEEP_MIN_MS = 20000;
-const SLEEP_MAX_MS = 50000;
+const SLEEP_MIN_ACC_MS = 100_000;
+const SLEEP_MAX_ACC_MS = 200_000;
 
 const MIN_AMOUNT_ETH = 0.5;
 const MAX_AMOUNT_ETH = 0.85;
@@ -24,4 +28,6 @@ module.exports = {
   LEAVE_AMOUNT_ETH_MIN,
   LEAVE_AMOUNT_ETH_MAX,
   MAX_SWAP_USDC,
+  SLEEP_MIN_ACC_MS,
+  SLEEP_MAX_ACC_MS,
 };
