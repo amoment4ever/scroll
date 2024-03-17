@@ -10,7 +10,7 @@ const exchange = new ccxt.okx({
 });
 
 async function getTokenBalance(token) {
-  const balance = await exchange.fetchBalance();
+  const balance = await exchange.fetchBalance({ type: 'funding' });
 
   return balance[token]?.free;
 }

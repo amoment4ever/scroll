@@ -14,7 +14,7 @@ const CHAINDS = {
 async function doBridge(ethAccount, web3, scan, proxy, bridgeAmount, fromChain, toChain) {
   const nitroBridge = new NitroBridge(proxy.proxy);
 
-  retry(async () => {
+  await retry(async () => {
     const accountBalance = await ethAccount.getBalance();
 
     logger.info('Balance', {
@@ -73,7 +73,7 @@ async function doBridge(ethAccount, web3, scan, proxy, bridgeAmount, fromChain, 
         address: ethAccount.address,
       });
     }
-  }, 7, 12000);
+  }, 7, 20000);
 }
 
 module.exports = {
