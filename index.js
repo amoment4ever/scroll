@@ -8,7 +8,7 @@ const { getRandomInt } = require('./utils/getRandomInt');
 const { logger } = require('./utils/logger');
 const { sleep } = require('./utils/sleep');
 const { waitForLowerGasPrice } = require('./utils/wait-for');
-const WALLETS = require('./wallets.json');
+const WALLETS = require('./wallets');
 
 async function start() {
   for (const { PRIVATE_KEY, DEPOSIT_OKX_ADDRESS } of WALLETS) {

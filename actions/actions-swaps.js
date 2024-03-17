@@ -5,6 +5,7 @@ const {
   USDC_TOKEN_ADDRESS, ZERO_ADDRESS, WETH_TOKEN_CONTRACT, SYNCSWAP_ROUTER_CONTRACT, INFINITY_APPROVE, USDT_TOKEN_ADDRESS,
 } = require('../constants/constants');
 const { logger } = require('../utils/logger');
+const { retry } = require('../utils/retry');
 
 async function getDecimals(web3, tokenAddress) {
   if (tokenAddress === ZERO_ADDRESS) {
@@ -19,45 +20,47 @@ async function getDecimals(web3, tokenAddress) {
 }
 
 async function doSwapSyncSwap(ethAccount, web3Scroll, scan, amountSwap, fromToken, toToken) {
-  const AMOUNT_SWAP = amountSwap;
-  const SLIPPAGE = 4; // percent
+  return await retry(async () => {
+    const AMOUNT_SWAP = amountSwap;
+    const SLIPPAGE = 2; // percent
 
-  const syncSwap = new SyncSwap(web3Scroll);
+    const syncSwap = new SyncSwap(web3Scroll);
 
-  const TOKENS = {
-    USDC: USDC_TOKEN_ADDRESS,
-    ETH: WETH_TOKEN_CONTRACT,
-    USDT: USDT_TOKEN_ADDRESS,
-  };
+    const TOKENS = {
+      USDC: USDC_TOKEN_ADDRESS,
+      ETH: WETH_TOKEN_CONTRACT,
+      USDT: USDT_TOKEN_ADDRESS,
+    };
 
-  const decimals = await getDecimals(web3Scroll, fromToken);
-  const amountInWei = new BigNumber(AMOUNT_SWAP).multipliedBy(10 ** decimals);
+    const decimals = await getDecimals(web3Scroll, fromToken);
+    const amountInWei = new BigNumber(AMOUNT_SWAP).multipliedBy(10 ** decimals);
 
-  const methodSwap = await syncSwap.swap(fromToken, toToken, amountInWei.toString(), SLIPPAGE, ethAccount.address);
+    const methodSwap = await syncSwap.swap(fromToken, toToken, amountInWei.toString(), SLIPPAGE, ethAccount.address);
 
-  const { gasPrice } = await ethAccount.getGasPrice();
+    const { gasPrice } = await ethAccount.getGasPrice();
 
-  if (fromToken !== TOKENS.ETH) {
-    await ethAccount.checkAndApproveToken(fromToken, SYNCSWAP_ROUTER_CONTRACT, amountInWei);
-  }
+    if (fromToken !== TOKENS.ETH) {
+      await ethAccount.checkAndApproveToken(fromToken, SYNCSWAP_ROUTER_CONTRACT, amountInWei);
+    }
 
-  const estimateGas = await methodSwap.estimateGas({
-    from: ethAccount.address,
-    value: TOKENS.ETH === fromToken ? amountInWei.toString() : undefined,
-    gasPrice,
-  });
+    const estimateGas = await methodSwap.estimateGas({
+      from: ethAccount.address,
+      value: TOKENS.ETH === fromToken ? amountInWei.toString() : undefined,
+      gasPrice,
+    });
 
-  const response = await methodSwap.send({
-    from: ethAccount.address,
-    value: TOKENS.ETH === fromToken ? amountInWei.toString() : undefined,
-    gasPrice,
-    gas: Math.floor(Number(estimateGas) * 1.2),
-  });
+    const response = await methodSwap.send({
+      from: ethAccount.address,
+      value: TOKENS.ETH === fromToken ? amountInWei.toString() : undefined,
+      gasPrice,
+      gas: Math.floor(Number(estimateGas) * 1.2),
+    });
 
-  logger.info('Swapped', {
-    address: ethAccount.address,
-    tx: `${scan}/tx/${response.transactionHash}`,
-  });
+    logger.info('Swapped', {
+      address: ethAccount.address,
+      tx: `${scan}/tx/${response.transactionHash}`,
+    });
+  }, 5, 20000);
 }
 
 module.exports = {

@@ -26,7 +26,7 @@ async function depositLayerBankAction(ethAccount, web3Scroll, scan, amountDeposi
       from: ethAccount.address,
       value: amountDepositWei.toString(),
       gasPrice,
-      gas: Math.floor(Number(estimateGas) * 1.2),
+      gas: Math.floor(Number(estimateGas) * 2),
     });
 
     logger.info('Deposit layerbank response', {

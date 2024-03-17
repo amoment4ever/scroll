@@ -17,7 +17,7 @@ const { randomNumber, getRandomInt } = require('../utils/getRandomInt');
 const { logger } = require('../utils/logger');
 const { retry } = require('../utils/retry');
 const { sleep } = require('../utils/sleep');
-const { waitForEthBalance } = require('../utils/wait-for');
+const { waitForEthBalance, waitForOkxBalance } = require('../utils/wait-for');
 const {
   depositLayerBankAction, borrowLayerBank, repayLayerBank, withdrawLayerBankAction,
 } = require('./actions-landings');
@@ -48,6 +48,9 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
   logger.info('Withdraw ETH from OKX', {
     amount: AMOUNT_ETH,
   });
+
+  await waitForOkxBalance(AMOUNT_ETH, 'ETH');
+
   await withdrawToken(ethAccount.address, AMOUNT_ETH, 'ETH', SOURCE_CHAIN);
 
   logger.info('Wait for ETH on balance', {
@@ -76,7 +79,7 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
 
   await sleepWithLog();
 
-  const ETH_USDC = 3000;
+  const ETH_USDC = 3600;
 
   const AMOUNT_BORROW = (ETH_USDC * AMOUNT_BORROW_PERCENT * balanceForWork).toFixed(6);
 
@@ -147,6 +150,7 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
 
   logger.info('Do bridge from SCROLL', {
     sourceChain: SOURCE_CHAIN,
+    bridgeAmount,
   });
   await doBridge(ethAccount, web3Scroll, scan, proxy, bridgeAmount, 'SCROLL', SOURCE_CHAIN);
 

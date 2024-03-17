@@ -1,5 +1,5 @@
 const { default: BigNumber } = require('bignumber.js');
-const { getTokenBalance } = require('../components/okx');
+const { getTokenBalance, transferFromSubToMaster } = require('../components/okx');
 const { web3Eth } = require('../components/web3-eth');
 const { MAX_GWEI_ETH } = require('../settings');
 const { logger } = require('./logger');
@@ -28,7 +28,7 @@ async function waitForLowerGasPrice() {
   }, 10, 12000);
 }
 
-async function waitForBitgetBalance(amount, token) {
+async function waitForOkxBalance(amount, token) {
   await retry(async () => {
     while (true) {
       const balance = await getTokenBalance(token);
@@ -41,8 +41,13 @@ async function waitForBitgetBalance(amount, token) {
       if (balance > amount) {
         break;
       } else {
-        logger.info('Sleep 10000ms, waiting for deposit USDV on BitGet');
+        logger.info('Sleep 10000ms, waiting for deposit ETH on OKX');
         await sleep(10000);
+
+        logger.info('Check sub accounts');
+        await transferFromSubToMaster('ETH').catch((exc) => {
+          logger.error('transfer from sub account error', exc);
+        });
       }
     }
   }, 3, 10000);
@@ -97,7 +102,7 @@ async function waitForEthBalance(web3, amount, address) {
 
 module.exports = {
   waitForTokenBalance,
-  waitForBitgetBalance,
+  waitForOkxBalance,
   waitForEthBalance,
   waitForLowerGasPrice,
 };
