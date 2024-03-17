@@ -56,7 +56,7 @@ async function doSwapSyncSwap(ethAccount, web3Scroll, scan, amountSwap, fromToke
       from: ethAccount.address,
       value: TOKENS.ETH === fromToken ? amountInWei.toString() : undefined,
       gasPrice,
-      gas: Math.floor(Number(estimateGas) * 1.2),
+      gas: Math.floor(Number(estimateGas) * 2),
     });
 
     logger.info('Swapped syncswap', {
@@ -96,7 +96,7 @@ async function doSwapSushiSwap(ethAccount, web3Scroll, scan, amountSwap, fromTok
       from: ethAccount.address,
       value,
       gasPrice,
-      gas: Math.floor(Number(estimateGas) * 1.2),
+      gas: Math.floor(Number(estimateGas) * 2),
     });
 
     logger.info('Swapped sushiswap', {
