@@ -36,9 +36,9 @@ Before running the script, ensure the following configuration files are properly
     module.exports = { OKX_API_KEY, SECRET_OKX, OKX_PHRASE };
     ```
 
-- `wallets.json`: Lists the wallets to be used by the script. Example format:
-    ```json
-    [
+- `wallets.js`: Lists the wallets to be used by the script. Example format:
+    ```js
+    module.exports = [
       {
         "PRIVATE_KEY": "Your_Private_Key",
         "DEPOSIT_OKX_ADDRESS": "Your_OKX_Deposit_Address",
@@ -65,4 +65,4 @@ To run the script, execute the following command in the terminal:
 Ensure all configurations are correctly set up for the script to run smoothly.
 
 ## Security
-Do not share your private keys, API keys, or any sensitive information publicly. Ensure that `secret.js` and `wallets.json` are adequately protected and not accessible by unauthorized individuals.
+Do not share your private keys, API keys, or any sensitive information publicly. Ensure that `secret.js` and `wallets.js` are adequately protected and not accessible by unauthorized individuals.
