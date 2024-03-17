@@ -195,9 +195,15 @@ async function depositAaveAction(ethAccount, web3Scroll, scan, amount) {
         }, 4, 10000);
       }
 
+      const estimateGasWithdraw = await aave.withdraw(depositedAmount, ethAccount.address).estimateGas({
+        from: ethAccount.address,
+        gasPrice,
+      });
+
       const withdraw = await aave.withdraw(depositedAmount, ethAccount.address).send({
         from: ethAccount.address,
         gasPrice,
+        gas: Math.floor(Number(estimateGasWithdraw) * 2),
       });
 
       logger.info('Withdraw info', {
