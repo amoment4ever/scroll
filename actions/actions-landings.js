@@ -293,9 +293,16 @@ async function depositCogFinance(ethAccount, web3Scroll, scan, amount) {
 
     if (depositedAmount) {
       logger.info('Try to withdraw');
+
+      const estimateGas = await cogFinance.withdraw(ethAccount.address, depositedAmount).estimateGas({
+        from: ethAccount.address,
+        gasPrice,
+      });
+
       const withdraw = await cogFinance.withdraw(ethAccount.address, depositedAmount).send({
         from: ethAccount.address,
         gasPrice,
+        gas: Math.floor(Number(estimateGas) * 2),
       });
 
       logger.info('Withdraw info', {
