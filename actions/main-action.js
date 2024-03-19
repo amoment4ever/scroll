@@ -109,10 +109,10 @@ async function performeFinancialActions(ethAccount, web3Scroll, scan) {
   const balanceForWorkWei = await ethAccount.getBalance(ethAccount.address);
   const balanceForWork = new BigNumber(balanceForWorkWei).div(1e18).minus(0.01);
 
-  await performActionWithProbability(depositCogFinance, 0.15, [ethAccount, web3Scroll, scan, balanceForWork]);
+  await performActionWithProbability(depositCogFinance, 0.4, [ethAccount, web3Scroll, scan, balanceForWork]);
   await performActionWithProbability(depositAaveAction, 0.4, [ethAccount, web3Scroll, scan, balanceForWork]);
 
-  if (Math.random() > 0.5) {
+  if (Math.random() > 0.33) {
     const amountToSwap = Math.min(balanceForWork.multipliedBy(randomNumber(0.4, 0.9)), MAX_SWAP_ETH * randomNumber(0.5, 0.9));
     await performSwap(ethAccount, web3Scroll, scan, amountToSwap, NATIVE_TOKEN, USDC_TOKEN_ADDRESS);
 

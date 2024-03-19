@@ -15,6 +15,7 @@ const LEAVE_AMOUNT_ETH_MAX = 0.015;
 const AMOUNT_BORROW_PERCENT = 0.5;
 
 const MAX_SWAP_USDC = 800;
+const MAX_SWAP_ETH = 0.3;
 
 const MAX_GWEI_ETH = 40;
 
@@ -30,4 +31,5 @@ module.exports = {
   MAX_SWAP_USDC,
   SLEEP_MIN_ACC_MS,
   SLEEP_MAX_ACC_MS,
+  MAX_SWAP_ETH,
 };

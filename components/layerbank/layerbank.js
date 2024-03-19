@@ -9,10 +9,11 @@ class LayerBank {
     this.contractAddress = LAYERBANK_CONTRACT;
     this.contract = new this.web3.eth.Contract(ABI_LAYERBANK, this.contractAddress);
     this.layerBankWeth = new LayerbankWeth(this.web3);
+    this.layerBankWethContract = new web3.eth.Contract(ABI_LP, LAYERBANK_WETH_CONTRACT);
   }
 
   async getAmountDeposit(address) {
-    const amount = await this.layerBankWeth.getBalance(address);
+    const amount = await this.layerBankWethContract.methods.underlyingBalanceOf(address).call();
 
     return amount;
   }

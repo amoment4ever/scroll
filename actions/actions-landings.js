@@ -95,11 +95,11 @@ async function withdrawLayerBankAction(ethAccount, web3Scroll, scan) {
     });
 
     if (depositedAmount) {
-      const estimateGas = await layerBank.withdraw(depositedAmount).estimateGas(
+      const estimateGas = await layerBank.withdraw(new BigNumber(depositedAmount).minus(5e13).toString()).estimateGas(
         { from: ethAccount.address },
       );
 
-      const withdraw = await layerBank.withdraw(depositedAmount).send({
+      const withdraw = await layerBank.withdraw(new BigNumber(depositedAmount).minus(5e13).toString()).send({
         from: ethAccount.address,
         gasPrice,
         gas: Math.floor(Number(estimateGas) * 2),
@@ -151,10 +151,17 @@ async function depositAaveAction(ethAccount, web3Scroll, scan, amount) {
   const amountDepositWei = new BigNumber(AMOUNT_DEPOSIT_AAVE).multipliedBy(10 ** 18);
 
   await retry(async () => {
+    const estimateGas = await aave.deposit(ethAccount.address).estimateGas({
+      from: ethAccount.address,
+      value: amountDepositWei.toString(),
+      gasPrice,
+    });
+
     const response = await aave.deposit(ethAccount.address).send({
       from: ethAccount.address,
       value: amountDepositWei.toString(),
       gasPrice,
+      gas: Math.floor(Number(estimateGas) * 2),
     });
 
     logger.info('Deposit Aave response', {
