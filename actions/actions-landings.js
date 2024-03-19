@@ -53,7 +53,7 @@ async function borrowLayerBank(ethAccount, web3Scroll, scan, amountBorrowWei) {
     const response = await layerBank.enterMarket().send({
       from: ethAccount.address,
       gasPrice,
-      gas: Math.floor(Number(estimateGas) * 1.2),
+      gas: Math.floor(Number(estimateGas) * 2),
     });
 
     logger.info('Colleteral ETH layerbank response', {
@@ -73,7 +73,7 @@ async function borrowLayerBank(ethAccount, web3Scroll, scan, amountBorrowWei) {
     const data = await layerBank.borrow(LAYERBANK_USDC, amountBorrowWei).send({
       from: ethAccount.address,
       gasPrice,
-      gas: Math.floor(Number(estimateGas) * 1.2),
+      gas: Math.floor(Number(estimateGas) * 2),
     });
 
     logger.info('Borrow usdc', {

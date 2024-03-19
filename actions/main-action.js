@@ -10,7 +10,7 @@ const {
   USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, LAYERBANK_USDC, WETH_TOKEN_CONTRACT, NATIVE_TOKEN,
 } = require('../constants/constants');
 const {
-  SLEEP_MIN_MS, SLEEP_MAX_MS, AMOUNT_BORROW_PERCENT, LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX, MIN_AMOUNT_ETH, MAX_AMOUNT_ETH, MAX_SWAP_USDC,
+  SLEEP_MIN_MS, SLEEP_MAX_MS, AMOUNT_BORROW_PERCENT, LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX, MIN_AMOUNT_ETH, MAX_AMOUNT_ETH, MAX_SWAP_USDC, MAX_SWAP_ETH,
 } = require('../settings');
 const { getRandomFromArray } = require('../utils/array');
 const { randomNumber, getRandomInt } = require('../utils/getRandomInt');
@@ -35,31 +35,37 @@ async function sleepWithLog() {
   await sleep(sleepMs);
 }
 
-async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress) {
-  const AMOUNT_ETH = +randomNumber(MIN_AMOUNT_ETH, MAX_AMOUNT_ETH).toFixed(5);
+const ETH_USDC = 3600;
 
-  // const SOURCE_CHAIN = getRandomFromArray(['Linea', 'Arbitrum One']);
-  const SOURCE_CHAIN = 'Linea';
-
-  const web3List = SOURCE_CHAIN === 'Linea' ? web3sLinea : web3sArbList;
-
-  const { web3: sourceWeb3 } = web3List.get();
-
+async function withdrawFromOkx(AMOUNT_ETH, ethAccount, SOURCE_CHAIN, sourceWeb3) {
   logger.info('Withdraw ETH from OKX', {
     amount: AMOUNT_ETH,
   });
-
   await waitForOkxBalance(AMOUNT_ETH, 'ETH');
-
   await withdrawToken(ethAccount.address, AMOUNT_ETH, 'ETH', SOURCE_CHAIN);
 
   logger.info('Wait for ETH on balance', {
     expect: AMOUNT_ETH * 0.95,
   });
   await waitForEthBalance(sourceWeb3, AMOUNT_ETH * 0.95, ethAccount.address);
+}
+
+function getSourceChain(ethAccount, proxy) {
+  // const SOURCE_CHAIN = getRandomFromArray(['Linea', 'Arbitrum One']);
+  const SOURCE_CHAIN = 'Linea';
+  const web3List = SOURCE_CHAIN === 'Linea' ? web3sLinea : web3sArbList;
+  const { web3: sourceWeb3 } = web3List.get();
 
   const ethAccountSourceChain = new EthAccount(ethAccount.privateKey, sourceWeb3, proxy);
 
+  return {
+    ethAccountSourceChain,
+    sourceWeb3,
+    SOURCE_CHAIN,
+  };
+}
+
+async function bridgeToScroll(AMOUNT_ETH, web3Scroll, SOURCE_CHAIN, ethAccountSourceChain, ethAccount, sourceWeb3, scan, proxy) {
   const amountBridge = +(AMOUNT_ETH * 0.98).toFixed(5);
 
   logger.info('Do bridge to SCROLL', {
@@ -75,115 +81,118 @@ async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress
 
   logger.info('Wait for ETH in SCROLL');
   await waitForEthBalance(web3Scroll, AMOUNT_ETH * 0.9, ethAccount.address);
+}
+
+async function performActionWithProbability(action, probability, params) {
+  if (Math.random() < probability) {
+    await action(...params);
+    await sleepWithLog();
+  }
+}
+
+async function performSwap(ethAccount, web3, scanService, amount, fromToken, toToken) {
+  logger.info('Swap', {
+    fromToken,
+    toToken,
+    amount,
+  });
+
+  const swapFunction = Math.random() > 0.5 ? doSwapSyncSwap : doSwapSushiSwap;
+  await swapFunction(ethAccount, web3, scanService, amount, fromToken, toToken);
+  await sleepWithLog();
+}
+
+async function performeFinancialActions(ethAccount, web3Scroll, scan) {
+  const usdcContract = new ERC20Contract(web3Scroll, USDC_TOKEN_ADDRESS);
+  const usdtContract = new ERC20Contract(web3Scroll, USDT_TOKEN_ADDRESS);
 
   const balanceForWorkWei = await ethAccount.getBalance(ethAccount.address);
   const balanceForWork = new BigNumber(balanceForWorkWei).div(1e18).minus(0.01);
 
-  if (Math.random() < 0.15) {
-    await depositCogFinance(ethAccount, web3Scroll, scan, balanceForWork);
-    await sleepWithLog();
-  }
-
-  if (Math.random() < 0.4) {
-    await depositAaveAction(ethAccount, web3Scroll, scan, balanceForWork);
-    await sleepWithLog();
-  }
-
-  logger.info('Do deposit LAYERBANK');
-  await depositLayerBankAction(ethAccount, web3Scroll, scan, balanceForWork);
-
-  await sleepWithLog();
-
-  const ETH_USDC = 3600;
-
-  const AMOUNT_BORROW = (ETH_USDC * AMOUNT_BORROW_PERCENT * balanceForWork).toFixed(6);
-
-  logger.info('Borrow USDC LAYERBANK', {
-    amount: AMOUNT_BORROW,
-  });
-  const borrowWei = new BigNumber(AMOUNT_BORROW).multipliedBy(10 ** 6);
-  await borrowLayerBank(ethAccount, web3Scroll, scan, borrowWei.toString());
-
-  const SWAP_AMOUNT = Math.min(AMOUNT_BORROW, +(MAX_SWAP_USDC * randomNumber(0.7, 1)).toFixed(6));
-
-  await sleepWithLog();
-
-  logger.info('Do swap USDC => USDT', {
-    amount: SWAP_AMOUNT,
-  });
+  await performActionWithProbability(depositCogFinance, 0.15, [ethAccount, web3Scroll, scan, balanceForWork]);
+  await performActionWithProbability(depositAaveAction, 0.4, [ethAccount, web3Scroll, scan, balanceForWork]);
 
   if (Math.random() > 0.5) {
-    await doSwapSyncSwap(ethAccount, web3Scroll, scan, SWAP_AMOUNT, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS);
-  } else {
-    await doSwapSushiSwap(ethAccount, web3Scroll, scan, SWAP_AMOUNT, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS);
-  }
+    const amountToSwap = Math.min(balanceForWork.multipliedBy(randomNumber(0.4, 0.9)), MAX_SWAP_ETH * randomNumber(0.5, 0.9));
+    await performSwap(ethAccount, web3Scroll, scan, amountToSwap, NATIVE_TOKEN, USDC_TOKEN_ADDRESS);
 
-  await sleepWithLog();
-
-  const usdtContract = new ERC20Contract(web3Scroll, USDT_TOKEN_ADDRESS);
-  const usdtBalance = await usdtContract.getBalance(ethAccount.address);
-
-  logger.info('Do swap USDT => USDC', {
-    amoount: Number(usdtBalance) / 1e6,
-  });
-
-  await sleepWithLog();
-  if (Math.random() > 0.5) {
-    await doSwapSyncSwap(ethAccount, web3Scroll, scan, Number(usdtBalance) / 1e6, USDT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS);
-  } else {
-    await doSwapSushiSwap(ethAccount, web3Scroll, scan, Number(usdtBalance) / 1e6, USDT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS);
-  }
-
-  const usdcContract = new ERC20Contract(web3Scroll, USDC_TOKEN_ADDRESS);
-  const usdcCurrentBalance = await usdcContract.getBalance(ethAccount.address);
-
-  const layerBank = new LayerBank(web3Scroll);
-
-  const borrowAmountWei = await layerBank.getBorrowAmount(LAYERBANK_USDC, ethAccount.address);
-
-  const difference = new BigNumber(borrowAmountWei).minus(usdcCurrentBalance);
-
-  if (difference.gte(0)) {
-    logger.info('Swap ETH => USDC', {
-      usdcCurrentBalance,
-      amount: difference.toString(),
-      borrowAmountWei,
-    });
-
-    const syncSwap = new SyncSwap(web3Scroll);
-
-    const poolAddress = await syncSwap.getPool(WETH_TOKEN_CONTRACT, USDC_TOKEN_ADDRESS);
-    const minAmountIn = await syncSwap.getAmountIn(poolAddress, USDC_TOKEN_ADDRESS, difference.toString(), 1, ethAccount.address);
+    const usdcCurrentBalance = await usdcContract.getBalance(ethAccount.address);
+    const usdcBalanceReadable = new BigNumber(usdcCurrentBalance).div(1e6).toString();
 
     if (Math.random() > 0.5) {
-      await doSwapSyncSwap(ethAccount, web3Scroll, scan, new BigNumber(minAmountIn).div(10 ** 18), WETH_TOKEN_CONTRACT, USDC_TOKEN_ADDRESS);
+      await performSwap(ethAccount, web3Scroll, scan, usdcBalanceReadable, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS);
+      const usdtBalance = await usdtContract.getBalance(ethAccount.address);
+      await performSwap(ethAccount, web3Scroll, scan, Number(usdtBalance) / 1e6, USDT_TOKEN_ADDRESS, NATIVE_TOKEN);
     } else {
-      await doSwapSushiSwap(ethAccount, web3Scroll, scan, new BigNumber(new BigNumber(minAmountIn).multipliedBy(1.05).toFixed(0)).div(10 ** 18), NATIVE_TOKEN, USDC_TOKEN_ADDRESS);
+      await performSwap(ethAccount, web3Scroll, scan, usdcBalanceReadable, USDC_TOKEN_ADDRESS, NATIVE_TOKEN);
     }
+  } else {
+    logger.info('Do deposit LAYERBANK');
+    await depositLayerBankAction(ethAccount, web3Scroll, scan, balanceForWork);
+    await sleepWithLog();
+
+    const AMOUNT_BORROW = (ETH_USDC * AMOUNT_BORROW_PERCENT * balanceForWork).toFixed(6);
+
+    logger.info('Borrow USDC LAYERBANK', {
+      amount: AMOUNT_BORROW,
+    });
+    const borrowWei = new BigNumber(AMOUNT_BORROW).multipliedBy(10 ** 6);
+    await borrowLayerBank(ethAccount, web3Scroll, scan, borrowWei.toString());
+    await sleepWithLog();
+
+    const SWAP_AMOUNT = Math.min(AMOUNT_BORROW, +(MAX_SWAP_USDC * randomNumber(0.7, 1)).toFixed(6));
+    await performSwap(ethAccount, web3Scroll, scan, SWAP_AMOUNT, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS);
+
+    const usdtBalance = await usdtContract.getBalance(ethAccount.address);
+    await performSwap(ethAccount, web3Scroll, scan, Number(usdtBalance) / 1e6, USDT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS);
+
+    const usdcCurrentBalance = await usdcContract.getBalance(ethAccount.address);
+
+    const layerBank = new LayerBank(web3Scroll);
+
+    const borrowAmountWei = await layerBank.getBorrowAmount(LAYERBANK_USDC, ethAccount.address);
+
+    const difference = new BigNumber(borrowAmountWei).minus(usdcCurrentBalance);
+
+    if (difference.gte(0)) {
+      logger.info('Swap ETH => USDC', {
+        usdcCurrentBalance,
+        amount: difference.toString(),
+        borrowAmountWei,
+      });
+
+      const syncSwap = new SyncSwap(web3Scroll);
+
+      const poolAddress = await syncSwap.getPool(WETH_TOKEN_CONTRACT, USDC_TOKEN_ADDRESS);
+      const minAmountIn = await syncSwap.getAmountIn(poolAddress, USDC_TOKEN_ADDRESS, difference.toString(), 1, ethAccount.address);
+
+      await performSwap(ethAccount, web3Scroll, scan, new BigNumber(new BigNumber(minAmountIn).multipliedBy(1.02).toFixed(0)).div(10 ** 18), NATIVE_TOKEN, USDC_TOKEN_ADDRESS);
+    }
+
+    logger.info('Return USDC layerbank');
+    await repayLayerBank(ethAccount, web3Scroll, scan, LAYERBANK_USDC, USDC_TOKEN_ADDRESS);
+    await sleepWithLog();
+    logger.info('Withdraw ETH from layerbank');
+    await withdrawLayerBankAction(ethAccount, web3Scroll, scan);
+    await sleepWithLog();
   }
-
-  await sleepWithLog();
-
-  logger.info('Return USDC layerbank');
-  await repayLayerBank(ethAccount, web3Scroll, scan, LAYERBANK_USDC, USDC_TOKEN_ADDRESS);
-  await sleepWithLog();
-  logger.info('Withdraw ETH from layerbank');
-  await withdrawLayerBankAction(ethAccount, web3Scroll, scan);
-  await sleepWithLog();
 
   const actions = [depositCogFinance, depositAaveAction];
 
-  if (Math.random() < 0.3) {
-    const randomAction = getRandomFromArray(actions);
-    await randomAction(ethAccount, web3Scroll, scan, balanceForWork);
-    await sleepWithLog();
-  }
+  await performActionWithProbability(getRandomFromArray(actions), 0.3, [ethAccount, web3Scroll, scan, balanceForWork.minus(0.01)]);
+  await performActionWithProbability(getRandomFromArray(actions), 0.3, [ethAccount, web3Scroll, scan, balanceForWork.minus(0.01)]);
+}
 
-  if (Math.random() < 0.3) {
-    const randomAction = getRandomFromArray(actions);
-    await randomAction(ethAccount, web3Scroll, scan, balanceForWork);
-    await sleepWithLog();
-  }
+async function mainAction(ethAccount, web3Scroll, scan, proxy, depositOkxAddress) {
+  const AMOUNT_ETH = +randomNumber(MIN_AMOUNT_ETH, MAX_AMOUNT_ETH).toFixed(5);
+
+  const { ethAccountSourceChain, sourceWeb3, SOURCE_CHAIN } = getSourceChain(ethAccount, proxy);
+
+  await withdrawFromOkx(AMOUNT_ETH, ethAccount, SOURCE_CHAIN, sourceWeb3);
+
+  await bridgeToScroll(AMOUNT_ETH, web3Scroll, SOURCE_CHAIN, ethAccountSourceChain, ethAccount, sourceWeb3, scan, proxy);
+
+  await performeFinancialActions(ethAccount, web3Scroll, scan);
 
   const currentBalance = await ethAccount.getBalance(ethAccount.address);
   const leaveAmount = +randomNumber(LEAVE_AMOUNT_ETH_MIN, LEAVE_AMOUNT_ETH_MAX).toFixed(5);

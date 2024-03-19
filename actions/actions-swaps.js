@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 const { default: BigNumber } = require('bignumber.js');
 const { ERC20Contract } = require('../components/erc20');
 const { SushiSwap } = require('../components/sushi-swap');
@@ -23,6 +24,14 @@ async function getDecimals(web3, tokenAddress) {
 
 async function doSwapSyncSwap(ethAccount, web3Scroll, scan, amountSwap, fromToken, toToken) {
   return await retry(async () => {
+    if (fromToken === NATIVE_TOKEN) {
+      fromToken = WETH_TOKEN_CONTRACT;
+    }
+
+    if (toToken === NATIVE_TOKEN) {
+      toToken = WETH_TOKEN_CONTRACT;
+    }
+
     const AMOUNT_SWAP = amountSwap;
     const SLIPPAGE = 2; // percent
 
